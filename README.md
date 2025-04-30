@@ -1,6 +1,6 @@
 # spotify-popularity-predictor
 
-![Spotify](![Imagen de análisis Spotify](spotify-popularity-predictor/data/raw/ml_spotify.png))
+![Imagen de análisis Spotify](data/raw/ml_spotify.png)
 
 ## Descripción
 Este proyecto aplica **Machine Learning** para predecir la **valoración** de una canción en **Spotify** basándose en sus características, como el ritmo, la energía, la acústica y otros atributos clave.
