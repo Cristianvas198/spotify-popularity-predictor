@@ -8,84 +8,110 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from xgboost import XGBRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.pipeline import Pipeline
 
-# Cargar datos procesados
-df = pd.read_csv("../data/processed/dataset_clean.csv")
 
-# Definir características y variable objetivo
-features = ['duration_ms', 'explicit', 'danceability', 'energy', 'key', 
-            'loudness', 'mode', 'speechiness', 'acousticness', 
-            'instrumentalness', 'liveness', 'valence', 'tempo', 
-            'time_signature', 'track_genre_encoded']
+SEED = 42 
+os.makedirs("../data/train/", exist_ok=True)
+os.makedirs("../data/test/", exist_ok=True)
+os.makedirs("../models/", exist_ok=True)
 
-X = df[features]
-y = df['popularity']
 
-# Normalización de datos
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+def load_and_prepare_data(): #Cargar y preparar los datos
+    df = pd.read_csv("../data/processed/dataset_clean.csv")
 
-# División en entrenamiento y prueba
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+    features = ['explicit', 'danceability', 'energy', 'key', 'loudness', 'mode', 
+                'speechiness', 'acousticness', 'instrumentalness', 'liveness',
+                'valence', 'tempo', 'duration_min', 'track_genre_encoded']
+    
+    X = df[features]
+    y = df["popularity"]
 
-# Lista de modelos a probar
-modelos = {
-    "Regresión Lineal": LinearRegression(),
-    "Random Forest": RandomForestRegressor(random_state=42),
-    "Gradient Boosting": GradientBoostingRegressor(random_state=42),
-    "XGBoost": XGBRegressor(random_state=42),
-    "SVR": SVR()
-}
+    return X, y, features
 
-# Carpeta para guardar modelos
-models_dir = "../models/"
-os.makedirs(models_dir, exist_ok=True)
+def create_preprocessor(): #Pipeline para preprocesar los datos
+    return Pipeline([("scaler", StandardScaler())])
 
-# Evaluar cada modelo y guardar sus resultados
-mejor_modelo = None
-mejor_rmse = float("inf")
 
-print("\nEntrenando modelos...")
-for nombre, modelo in modelos.items():
-    modelo.fit(X_train, y_train)
-    predicciones = modelo.predict(X_test)
+def get_models(): #Modelos a probar
+    return {
+        "LinearRegression": LinearRegression(),
+        "RandomForest": RandomForestRegressor(random_state=SEED),
+        "GradientBoosting": GradientBoostingRegressor(random_state=SEED),
+        "XGBoost": XGBRegressor(random_state=SEED),
+        "SVR": SVR()
+    }
 
-    rmse = np.sqrt(mean_squared_error(y_test, predicciones))
-    mae = mean_absolute_error(y_test, predicciones)
-    r2 = r2_score(y_test, predicciones)
+def train_and_evaluate(): #Entrenamiento y evaluación de modelos
+    X, y, features = load_and_prepare_data()
 
-    print(nombre, "- RMSE:", round(rmse, 1), "- MAE:", round(mae, 1), "- R²:", round(r2, 3))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=SEED)
 
-    # Guardar modelo en la carpeta "models"
-    modelo_path = os.path.join(models_dir, f"{nombre.replace(' ', '_')}.pkl")
-    joblib.dump(modelo, modelo_path)
+    
+    preprocessor = create_preprocessor() # Preprocesamiento
+    X_train_preprocessed = preprocessor.fit_transform(X_train)
+    X_test_preprocessed = preprocessor.transform(X_test)
 
-    # Actualizar el mejor modelo según RMSE
-    if rmse < mejor_rmse:
-        mejor_rmse = rmse
-        mejor_modelo = modelo_path
+    joblib.dump(preprocessor, "../models/preprocessor.pkl") # Guardar scaler
 
-print("\nMejor modelo seleccionado:", mejor_modelo)
 
-# Optimización del mejor modelo
-param_dist = {
-    'n_estimators': [50, 100, 200],
-    'max_depth': [None, 5, 10, 20],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4]
-}
+    X_train_df = pd.DataFrame(X_train_preprocessed, columns=features) # Convertir a DataFrame manteniendo los nombres de columnas
+    X_test_df = pd.DataFrame(X_test_preprocessed, columns=features)
 
-# Cargar el mejor modelo encontrado
-modelo_final = joblib.load(mejor_modelo)
 
-search = RandomizedSearchCV(modelo_final, param_dist, n_iter=3, cv=5, scoring='neg_mean_squared_error', n_jobs=-1, random_state=42, verbose=2)
-search.fit(X_train, y_train)
+    X_train_df.to_csv("../data/train/X_train.csv", index=False) # Guardar datasets
+    pd.DataFrame(y_train).to_csv("../data/train/y_train.csv", index=False)
+    X_test_df.to_csv("../data/test/X_test.csv", index=False)
+    pd.DataFrame(y_test).to_csv("../data/test/y_test.csv", index=False)
 
-print("\nMejor modelo optimizado:", search.best_params_)
-print("Error optimizado (RMSE):", round(np.sqrt(-search.best_score_), 1))
+    modelos = get_models() # Entrenar modelos
+    best_model = None
+    best_score = float("inf")
 
-# Guardar el modelo final
-modelo_final_path = os.path.join(models_dir, "modelo_final.pkl")
-joblib.dump(search.best_estimator_, modelo_final_path)
-print("Modelo final guardado en:", modelo_final_path)
+    for name, model in modelos.items():
+        print(f"\nEntrenando {name}...")
+        model.fit(X_train_df, y_train)
+
+        y_pred = model.predict(X_test_df) # Evaluación
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        r2 = r2_score(y_test, y_pred)
+
+        print(f"{name} - RMSE: {rmse:.2f}, R2: {r2:.2f}")
+
+        joblib.dump(model, f"../models/{name}.pkl") # Guardar modelo
+
+        if rmse < best_score: # Actualizar mejor modelo
+            best_score = rmse
+            best_model = name
+
+    print(f"\nMejor modelo: {best_model} con RMSE: {best_score:.2f}")
+
+    if best_model in ["RandomForest", "GradientBoosting", "XGBoost"]: # Optimización del mejor modelo
+        print("\nOptimizando el mejor modelo...")
+        param_dist = {
+            "n_estimators": [50, 100, 200],
+            "max_depth": [None, 5, 10, 20],
+            "min_samples_split": [2, 5, 10],
+            "min_samples_leaf": [1, 2, 4],
+        }
+
+        best_model_instance = modelos[best_model]
+        search = RandomizedSearchCV(
+            best_model_instance,
+            param_dist,
+            n_iter=10,
+            cv=5,
+            scoring="neg_mean_squared_error",
+            n_jobs=-1,
+            random_state=SEED,
+        )
+
+        search.fit(X_train_df, y_train)
+        print(f"Mejores parámetros: {search.best_params_}")
+
+        joblib.dump(search.best_estimator_, "../models/best_model.pkl") # Guardar modelo optimizado
+        print("Modelo optimizado guardado.")
+
+if __name__ == "__main__":
+    train_and_evaluate()
