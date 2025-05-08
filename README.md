@@ -64,7 +64,7 @@ Si deseas probar NØIZE en tu entorno local, sigue estos pasos:
 
 1. Clona el repositorio:
    ```bash
-   git clone https://github.com/tu-repositorio/NOIZE.git
+   git clone https://github.com/Cristianvas198/NOIZE
 
 2. Ejecuta la aplicación:
    streamlit run app.py
