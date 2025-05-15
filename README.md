@@ -1,4 +1,4 @@
-![NØIZE](docs/NØIZE.png)
+![NØIZE](docs/img/NØIZE.png)
 
 # NØIZE 🎶 
 
@@ -33,7 +33,7 @@ El éxito de una canción **suele ser una incógnita**, pero NØIZE se basa en d
 Trabajamos con **miles y miles de datos**, analizando más de **100 géneros musicales diferentes** en todo el mundo.  
 Pero lo más importante: analizamos **canciones exitosas reales**, identificando patrones que han conquistado al público.
 
-![workers_NØIZE](docs/workers_NØIZE.png)
+![workers_NØIZE](docs/img/workers_NØIZE.png)
 ---
 
 ## 🛠 Tecnologías utilizadas
