@@ -74,3 +74,5 @@ Si deseas probar NØIZE en tu entorno local, sigue estos pasos:
 Si tienes dudas o sugerencias, no dudes en escribirme a: (https://www.linkedin.com/in/cristiangvm98/)
 
 ### 🔥 ¡Esperamos que NØIZE te ayude a transformar el mundo de la música! 🚀🎶
+
+![iphone](docs/img/iphone_Nøize.png)
