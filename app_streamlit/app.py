@@ -3,11 +3,11 @@ import pandas as pd
 import joblib
 import time
 
-# Cargar el modelo (ÚNICO CAMBIO NECESARIO)
-modelo_path = "../models/model.pkl"  # Cambiado de best_model.pkl a model.pkl
+# Cargar el modelo 
+modelo_path = "../models/model.pkl" 
 modelo = joblib.load(modelo_path)
 
-# Verificación silenciosa de compatibilidad (sin afectar tu interfaz)
+# Verificación de compatibilidad
 if not hasattr(modelo, 'feature_names_in_'):
     modelo.feature_names_in_ = ['explicit', 'danceability', 'energy', 'key', 
                               'loudness', 'mode', 'speechiness', 'acousticness',
@@ -18,7 +18,7 @@ genre_df = pd.read_csv("../data/processed/track_genre_mapping.csv")
 genre_dict = dict(zip(genre_df["Genre"], genre_df["Encoded_Value"]))
 
 # =============================================
-# ESTILOS COMPLETOS (EXACTAMENTE IGUAL)
+# ESTILOS y DISEÑO
 # =============================================
 st.markdown("""
 <style>
@@ -180,7 +180,7 @@ div.stButton > button:first-child {
 """, unsafe_allow_html=True)
 
 # =============================================
-# INTERFAZ DE LA APLICACIÓN (EXACTAMENTE IGUAL)
+# INTERFAZ DE LA APLICACIÓN 
 # =============================================
 
 # Encabezado
@@ -247,17 +247,17 @@ with st.container():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Procesamiento de datos (IGUAL)
+# Procesamiento de datos 
 genero_codificado = genre_dict[genero_musical]
 modo = 1 if modo == "Mayor" else 0
 explicito = 1 if explicito == "Sí" else 0
 bailabilidad = {"Bajo": 0.2, "Medio": 0.5, "Alto": 0.8}[nivel_bailabilidad]
 energia = {"Bajo": 0.2, "Medio": 0.5, "Alto": 0.8}[nivel_energia]
 
-# 1. Verificación de columnas (opcional, puedes borrarlo después)
+# 1. Verificación de columnas 
 print("Columnas que espera el modelo:", modelo.feature_names_in_)
 
-# 1. Diccionario con todos los valores básicos (los que ya tienes en tu interfaz)
+# 1. Diccionario con todos los valores básicos 
 datos_cancion = {
     'explicit': explicito,
     'danceability': bailabilidad,
@@ -274,7 +274,7 @@ datos_cancion = {
     'duration_min': duracion_total,
     'track_genre_encoded': genero_codificado,
     
-    # 2. Columnas adicionales que el modelo pide (valores por defecto)
+    # 2. Columnas adicionales que el modelo pide 
     'time_signature': 4,                # Valor típico 4/4
     'energy_loudness': energia * valor_volumen,  # Interacción energía-volumen
     'dance_valence': bailabilidad * valencia,    # Interacción bailabilidad-valencia
@@ -288,12 +288,12 @@ data = pd.DataFrame({k: [v] for k, v in datos_cancion.items()
 # 4. Ordenar columnas exactamente como el modelo las espera
 data = data[modelo.feature_names_in_]
 
-# Validación (IGUAL)
+# Validación 
 if any(pd.isnull(data.iloc[0])):
     st.error("❌ Por favor complete todos los campos")
     st.stop()
 
-# Botón de predicción (IGUAL)
+# Botón de predicción
 button = st.button("PREDECIR POPULARIDAD")
 
 if button:
@@ -303,7 +303,7 @@ if button:
     try:
         prediccion = modelo.predict(data)[0]
         
-        # Resultado y recomendaciones (IGUAL)
+        # Resultado y recomendaciones 
         if prediccion < 40:
             color = "#FF5555"
             nivel = "BAJA POPULARIDAD"
@@ -338,7 +338,7 @@ if button:
                 "Organiza una gira o presentaciones en vivo"
             ]
             
-        # Mostrar resultados (IGUAL)
+        # Mostrar resultados 
         border_color = "#FF5555"  # Rojo por defecto (baja popularidad)
         if prediccion >= 70:
             border_color = "#00FF00"  # Verde para alta popularidad
@@ -354,7 +354,7 @@ if button:
         </div>
         """, unsafe_allow_html=True)
         
-        # Mostrar recomendaciones (IGUAL)
+        # Mostrar recomendaciones 
         st.markdown(f"""
         <div class="recommendation-box">
             <div class="recommendation-title">RECOMENDACIONES PARA TU CANCIÓN</div>
@@ -370,7 +370,7 @@ if button:
     except Exception as e:
         st.error(f"Error en el análisis: {str(e)}")
 
-# Footer (IGUAL)
+# Footer 
 st.markdown("""
 <div style="text-align: center; margin-top: 30px; color: #6e00ff; font-size: 11px;">
     NØIZE Predictor v1.0 | Herramienta profesional para artistas y productores
