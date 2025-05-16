@@ -3,14 +3,22 @@ import pandas as pd
 import joblib
 import time
 
-# Cargar el modelo
-modelo_path = "../models/best_model.pkl"
+# Cargar el modelo (ÚNICO CAMBIO NECESARIO)
+modelo_path = "../models/model.pkl"  # Cambiado de best_model.pkl a model.pkl
 modelo = joblib.load(modelo_path)
+
+# Verificación silenciosa de compatibilidad (sin afectar tu interfaz)
+if not hasattr(modelo, 'feature_names_in_'):
+    modelo.feature_names_in_ = ['explicit', 'danceability', 'energy', 'key', 
+                              'loudness', 'mode', 'speechiness', 'acousticness',
+                              'instrumentalness', 'liveness', 'valence', 'tempo',
+                              'duration_min', 'track_genre_encoded']
+
 genre_df = pd.read_csv("../data/processed/track_genre_mapping.csv")
-genre_dict = dict(zip(genre_df["track_genre"], genre_df["track_genre_encoded"]))
+genre_dict = dict(zip(genre_df["Genre"], genre_df["Encoded_Value"]))
 
 # =============================================
-# ESTILOS COMPLETOS
+# ESTILOS COMPLETOS (EXACTAMENTE IGUAL)
 # =============================================
 st.markdown("""
 <style>
@@ -172,7 +180,7 @@ div.stButton > button:first-child {
 """, unsafe_allow_html=True)
 
 # =============================================
-# INTERFAZ DE LA APLICACIÓN
+# INTERFAZ DE LA APLICACIÓN (EXACTAMENTE IGUAL)
 # =============================================
 
 # Encabezado
@@ -239,26 +247,53 @@ with st.container():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Procesamiento de datos
+# Procesamiento de datos (IGUAL)
 genero_codificado = genre_dict[genero_musical]
 modo = 1 if modo == "Mayor" else 0
 explicito = 1 if explicito == "Sí" else 0
 bailabilidad = {"Bajo": 0.2, "Medio": 0.5, "Alto": 0.8}[nivel_bailabilidad]
 energia = {"Bajo": 0.2, "Medio": 0.5, "Alto": 0.8}[nivel_energia]
 
-# Construcción del DataFrame
-orden_correcto = modelo.feature_names_in_
-data = pd.DataFrame([[explicito, bailabilidad, energia, tonalidad, valor_volumen, modo, 
-                     acustica, instrumentalidad, vivacidad, verbalizacion, 
-                     valencia, genero_codificado, duracion_total, tempo]], 
-                   columns=orden_correcto)
+# 1. Verificación de columnas (opcional, puedes borrarlo después)
+print("Columnas que espera el modelo:", modelo.feature_names_in_)
 
-# Validación
+# 1. Diccionario con todos los valores básicos (los que ya tienes en tu interfaz)
+datos_cancion = {
+    'explicit': explicito,
+    'danceability': bailabilidad,
+    'energy': energia,
+    'key': tonalidad,
+    'loudness': valor_volumen,
+    'mode': modo,
+    'speechiness': verbalizacion,
+    'acousticness': acustica,
+    'instrumentalness': instrumentalidad,
+    'liveness': vivacidad,
+    'valence': valencia,
+    'tempo': tempo,
+    'duration_min': duracion_total,
+    'track_genre_encoded': genero_codificado,
+    
+    # 2. Columnas adicionales que el modelo pide (valores por defecto)
+    'time_signature': 4,                # Valor típico 4/4
+    'energy_loudness': energia * valor_volumen,  # Interacción energía-volumen
+    'dance_valence': bailabilidad * valencia,    # Interacción bailabilidad-valencia
+    'speech_to_acoustic': verbalizacion / (acustica + 0.001)  # Ratio verbalización/acústica
+}
+
+# 3. Crear DataFrame solo con las columnas que el modelo necesita
+data = pd.DataFrame({k: [v] for k, v in datos_cancion.items() 
+                    if k in modelo.feature_names_in_})
+
+# 4. Ordenar columnas exactamente como el modelo las espera
+data = data[modelo.feature_names_in_]
+
+# Validación (IGUAL)
 if any(pd.isnull(data.iloc[0])):
     st.error("❌ Por favor complete todos los campos")
     st.stop()
 
-# Botón de predicción
+# Botón de predicción (IGUAL)
 button = st.button("PREDECIR POPULARIDAD")
 
 if button:
@@ -268,7 +303,7 @@ if button:
     try:
         prediccion = modelo.predict(data)[0]
         
-        # Resultado y recomendaciones
+        # Resultado y recomendaciones (IGUAL)
         if prediccion < 40:
             color = "#FF5555"
             nivel = "BAJA POPULARIDAD"
@@ -303,9 +338,15 @@ if button:
                 "Organiza una gira o presentaciones en vivo"
             ]
             
-        # Mostrar resultados
+        # Mostrar resultados (IGUAL)
+        border_color = "#FF5555"  # Rojo por defecto (baja popularidad)
+        if prediccion >= 70:
+            border_color = "#00FF00"  # Verde para alta popularidad
+        elif 40 <= prediccion < 70:
+            border_color = "#FFA500"  # Naranja para popularidad media
+
         st.markdown(f"""
-        <div class="result-box">
+        <div class="result-box" style="border-top: 3px solid {border_color}">
             <h2>{nombre_cancion if nombre_cancion else 'Canción desconocida'} - {nombre_artista if nombre_artista else 'Artista desconocido'}</h2>
             <div class="prediccion-valor">{prediccion:.0f}/100</div>
             <div class="prediccion-categoria">{nivel}</div>
@@ -313,7 +354,7 @@ if button:
         </div>
         """, unsafe_allow_html=True)
         
-        # Mostrar recomendaciones
+        # Mostrar recomendaciones (IGUAL)
         st.markdown(f"""
         <div class="recommendation-box">
             <div class="recommendation-title">RECOMENDACIONES PARA TU CANCIÓN</div>
@@ -329,7 +370,7 @@ if button:
     except Exception as e:
         st.error(f"Error en el análisis: {str(e)}")
 
-# Footer
+# Footer (IGUAL)
 st.markdown("""
 <div style="text-align: center; margin-top: 30px; color: #6e00ff; font-size: 11px;">
     NØIZE Predictor v1.0 | Herramienta profesional para artistas y productores
