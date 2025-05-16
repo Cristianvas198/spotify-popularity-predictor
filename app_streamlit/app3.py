@@ -14,9 +14,8 @@ if not hasattr(modelo, 'feature_names_in_'):
                               'instrumentalness', 'liveness', 'valence', 'tempo',
                               'duration_min', 'track_genre_encoded']
 
-# Cargar mapeo de géneros (se mantiene igual)
 genre_df = pd.read_csv("../data/processed/track_genre_mapping.csv")
-genre_dict = dict(zip(genre_df["track_genre"], genre_df["track_genre_encoded"]))
+genre_dict = dict(zip(genre_df["Genre"], genre_df["Encoded_Value"]))
 
 # =============================================
 # ESTILOS COMPLETOS (EXACTAMENTE IGUAL)

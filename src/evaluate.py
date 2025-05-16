@@ -24,7 +24,6 @@ def evaluate_model(model, X, y):
     """Evalúa el modelo y muestra métricas"""
     y_pred = model.predict(X)
     
-    # Cálculo compatible con todas las versiones de scikit-learn
     rmse = np.sqrt(mean_squared_error(y, y_pred))
     r2 = r2_score(y, y_pred)
     
